@@ -16,7 +16,9 @@ def choose_file():
     return Path(askopenfilename())
 
 
+# create a dictionary mapping kanji to hiragana
 def get_furi(word):
+    # simple deletion of the following hiraganas
     if not re.search(KANJI_RE, word["orig"][-2:]):
         word["hira"] = word["hira"][:-2]
     elif not re.search(KANJI_RE, word["orig"][-1]):
