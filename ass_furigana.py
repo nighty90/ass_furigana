@@ -13,16 +13,21 @@ K_TIME_RE = r"(\{\\k\d+})"
 def choose_file():
     root = tk.Tk()
     root.withdraw()
-    return Path(askopenfilename())
+    file_path = askopenfilename()
+    if not file_path:
+        exit()
+    return Path(file_path)
 
 
 # create a dictionary mapping kanji to hiragana
 def get_furi(word):
     # simple deletion of the following hiraganas
-    if not re.search(KANJI_RE, word["orig"][-2:]):
-        word["hira"] = word["hira"][:-2]
-    elif not re.search(KANJI_RE, word["orig"][-1]):
-        word["hira"] = word["hira"][:-1]
+    for i in range(-1, (-1*len(word["orig"]) - 1), -1):
+        if word["orig"][i] != word["hira"][i]:
+            i += 1
+            if i != 0:
+                word["hira"] = word["hira"][:i]
+            break
 
     furi_dict = {}
     word_kanjis = re.findall(KANJI_RE, word["orig"])
@@ -78,7 +83,14 @@ def process_line(ass_line, kks_obj):
             else:
                 char_add_furi.append(char)
             cur_pos += 1
-        item_add_furi = r"{\k0}".join(char_add_furi)
+
+        # calculate and add k_time for each character
+        item_k_time = re.search(r"\d+", processed_items[-1])
+        item_k_time = int(item_k_time.group(0))
+        time_each, time_mod = divmod(item_k_time, len(item))
+        processed_items[-1] = r"{\k%s}" % (time_each + time_mod)
+        char_k_time = r"{\k%s}" % time_each
+        item_add_furi = char_k_time.join(char_add_furi)
         processed_items.append(item_add_furi)
 
     processed_text = "".join(processed_items)
