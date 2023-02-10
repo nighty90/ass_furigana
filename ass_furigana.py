@@ -10,17 +10,20 @@ NOT_KANJI_RE = r"[^㐀-䶵一-鿋豈-頻]"
 K_TIME_RE = r"(\{\\k\d+})"
 
 
+# open a window for choosing file
 def choose_file():
     root = tk.Tk()
     root.withdraw()
     file_path = askopenfilename()
     if not file_path:
+        print("No file is chosen. Exit.")
         exit()
     return Path(file_path)
 
 
 # create a dictionary mapping kanji to hiragana
 def get_furi(word):
+
     # simple deletion of the following hiraganas
     for i in range(-1, (-1*len(word["orig"]) - 1), -1):
         if word["orig"][i] != word["hira"][i]:
@@ -28,12 +31,15 @@ def get_furi(word):
             if i != 0:
                 word["hira"] = word["hira"][:i]
             break
-
+    
+    # create kanji - hiragana mapping
+    # initialize
     furi_dict = {}
     word_kanjis = re.findall(KANJI_RE, word["orig"])
     if not word_kanjis:
         return furi_dict
-
+    
+    # evenly assign hiraganas to each kanji
     furi_length = ceil(len(word["hira"]) / len(word_kanjis))
     for i, kanji in enumerate(word_kanjis):
         start = i * furi_length
@@ -42,6 +48,7 @@ def get_furi(word):
     return furi_dict
 
 
+# process a line in ass file
 def process_line(ass_line, kks_obj):
     ass_line_items = ass_line.split(",")
     text = ass_line_items[-1]
@@ -100,11 +107,13 @@ def process_line(ass_line, kks_obj):
 
 
 if __name__ == "__main__":
+    # chooose the input file
     input_path = choose_file()
     ass = open(input_path, "r", encoding="utf-8")
     output_path = input_path.with_stem(input_path.stem + "_furigana")
     ass_furi = open(output_path, "w", encoding="utf-8")
-
+    
+    # process each line
     kks = kakasi()
     for line in ass:
         if not line.startswith("Dialogue: "):
